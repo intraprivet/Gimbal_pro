@@ -3,20 +3,31 @@
 #define PIN 12
 
 BidirDShotX1 *esc;
+bool escInitialized = false;  // Флаг инициализации
 
-void initializeESC() {
-  // Эмулируем два "провала" сигнала на пине, как будто пин дергается в LOW
-  pinMode(PIN, OUTPUT);
-  digitalWrite(PIN, LOW);
-  delay(500);  // Краткий LOW
-
-  // Теперь запускаем регулярную подачу DShot-пакетов с нулевым газом
-  esc = new BidirDShotX1(PIN);
-  for (int i = 0; i < 5000; i++) {
-    esc->sendThrottle(0);  // Подаём 0% газа
-    delayMicroseconds(200);
+void SendThrottle(uint16_t value) {
+  if (escInitialized && esc) {
+    esc->sendThrottle(value);
   }
 }
+
+void initializeESC() {
+  delay(1000);
+  digitalWrite(PIN, LOW);
+  delay(500);
+
+  esc = new BidirDShotX1(PIN);
+  
+  delayMicroseconds(200);
+  // арминг нулём ~600 мс
+  for (int i = 0; i < 3000; i++) {
+    esc->sendThrottle(0);
+    delayMicroseconds(200);
+  }
+
+  escInitialized = true;
+}
+
 
 void setup() {
   initializeESC();
@@ -24,5 +35,5 @@ void setup() {
 
 void loop() {
   delayMicroseconds(200);
-  esc->sendThrottle(100);  // Подача 5% газа (100 из 2000)
+  SendThrottle(52);  // Подача 5% газа
 }
