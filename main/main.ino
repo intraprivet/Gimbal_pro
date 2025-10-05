@@ -1,24 +1,28 @@
 #include <PIO_DShot.h>
 
-#define PIN 10
+#define PIN 12
 
 BidirDShotX1 *esc;
 
 void initializeESC() {
-  uint32_t start = millis();
-  while (millis() - start < 500) {
-    esc->sendThrottle(0);     // Подаём 0% газа для инициализации
-    delayMicroseconds(200);   // DShot600 задержка
+  // Эмулируем два "провала" сигнала на пине, как будто пин дергается в LOW
+  pinMode(PIN, OUTPUT);
+  digitalWrite(PIN, LOW);
+  delay(500);  // Краткий LOW
+
+  // Теперь запускаем регулярную подачу DShot-пакетов с нулевым газом
+  esc = new BidirDShotX1(PIN);
+  for (int i = 0; i < 5000; i++) {
+    esc->sendThrottle(0);  // Подаём 0% газа
+    delayMicroseconds(200);
   }
 }
 
 void setup() {
-  esc = new BidirDShotX1(PIN);  
-  initializeESC();              
+  initializeESC();
 }
 
 void loop() {
-  delayMicroseconds(200);      // Периодическая задержка
-  esc->sendThrottle(75);      // Подача 5% газа (100 из 2000)
+  delayMicroseconds(200);
+  esc->sendThrottle(100);  // Подача 5% газа (100 из 2000)
 }
-
